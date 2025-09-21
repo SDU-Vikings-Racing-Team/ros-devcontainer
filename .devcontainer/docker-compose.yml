@@ -1,0 +1,27 @@
+services:
+  ros2-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        ROS_DISTRO: humble
+    network_mode: host
+    environment:
+      ROS_DOMAIN_ID: 7
+      ROS_DISTRO: humble
+      # DISPLAY will be empty in CI, which is expected
+      DISPLAY: ${DISPLAY:-}
+    volumes:
+      - ..:/home/rosdev/workspace_host:cached
+      - ros-rosdep-cache:/home/rosdev/.ros
+      - ros-workspace-build:/home/rosdev/ros_ws/build
+      - ros-workspace-install:/home/rosdev/ros_ws/install
+      - ../bags:/home/rosdev/ros_ws/bags
+    working_dir: /home/rosdev/ros_ws
+    user: rosdev
+    command: sleep infinity
+
+volumes:
+  ros-rosdep-cache:
+  ros-workspace-build:
+  ros-workspace-install:

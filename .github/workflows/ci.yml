@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - '.devcontainer/**'
+      - 'Dockerfile'
+      - 'scripts/**'
+      - 'packages.repos'
+      - '.github/workflows/**'
+  
+  workflow_dispatch:
+
+jobs:
+  test-devcontainer:
+    runs-on: ubuntu-latest
+    name: Test Devcontainer Build
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up CI environment
+        run: |
+          # Make host-setup.sh executable
+          chmod +x .devcontainer/host-setup.sh
+          
+          # Export CI variable to ensure correct environment detection
+          export CI=true
+          
+          # initializeCommand runs automatically
+        
+      - name: Build and test devcontainer
+        uses: devcontainers/ci@v0.3
+        with:
+          imageName: ros2-devcontainer
+          env: |
+            CI=true
+            GITHUB_ACTIONS=true
+          
+          runCmd: |
+            echo "========================================="
+            echo "Testing ROS2 Devcontainer"
+            echo "========================================="
+            
+            # Check ROS installation
+            echo -e "\n[1/4] Checking ROS installation..."
+            source /opt/ros/${ROS_DISTRO}/setup.bash
+            ros2 --version
+            
+            # Check workspace structure
+            echo -e "\n[2/4] Checking workspace structure..."
+            ls -la /home/rosdev/ros_ws/
+            
+            # Check scripts are executable
+            echo -e "\n[3/4] Checking scripts..."
+            ls -la /home/rosdev/ros_ws/scripts/
+            
+            # Test environment configuration
+            echo -e "\n[4/4] Testing environment setup..."
+            source /home/rosdev/ros_ws/scripts/config.sh
+            echo "ROS_DISTRO: $ROS_DISTRO"
+            echo "WS_ROOT: $WS_ROOT"
+            echo "ROS_DOMAIN_ID: $ROS_DOMAIN_ID"
+            
+            # Verify no X11 mounts in CI (they should not exist)
+            echo -e "\nVerifying CI configuration..."
+            if [ -f /home/rosdev/.Xauthority ]; then
+              echo "ERROR: .Xauthority should not exist in CI"
+              exit 1
+            fi
+            
+            echo -e "\n========================================="
+            echo "All tests passed!"
+            echo "========================================="
