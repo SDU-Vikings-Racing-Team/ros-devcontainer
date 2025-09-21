@@ -1,0 +1,16 @@
+# Host workspace source (will be mounted)
+src/*
+!src/.gitkeep
+
+# Directories
+bags/*
+!bags/.gitkeep
+
+# Build artifacts (stored in Docker volumes)
+build/
+install/
+log/
+
+# Temporary files
+*.log
+.vscode/

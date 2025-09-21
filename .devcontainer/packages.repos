@@ -1,0 +1,11 @@
+repositories:
+  # BROKEN | Third-party dependencies for lidar_cone_extraction
+  #lidarslam_ros2:
+  #  type: git
+  #  url: https://github.com/rsasaki0109/lidarslam_ros2.git
+  #  version: humble
+  # BROKEN | Required dependency for lidarslam_ros2
+  #ndt_omp_ros2:
+  #  type: git
+  #  url: https://github.com/rsasaki0109/ndt_omp_ros2.git
+  #  version: humble
