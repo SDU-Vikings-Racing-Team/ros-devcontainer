@@ -1,57 +1,11 @@
 {
     "name": "ROS2 Dev Env",
-    "build": {
-        "dockerfile": "Dockerfile",
-        "context": ".",
-        "args": {
-            "ROS_DISTRO": "humble"
-        }
-    },
-    "runArgs": ["--network=host"],
-    "workspaceMount": "source=${localWorkspaceFolder},target=/home/rosdev/workspace_host,type=bind",
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "ros2-dev",
     "workspaceFolder": "/home/rosdev/ros_ws",
-    "containerEnv": {
-        "DISPLAY": "${localEnv:DISPLAY}",
-        "ROS_DOMAIN_ID": "7",
-        "ROS_DISTRO": "humble"
-    },
-    "mounts": [
-        {
-            "source": "ros-rosdep-cache",
-            "target": "/home/rosdev/.ros",
-            "type": "volume"
-        },
-        {
-            "source": "ros-workspace-build",
-            "target": "/home/rosdev/ros_ws/build",
-            "type": "volume"
-        },
-        {
-            "source": "ros-workspace-install",
-            "target": "/home/rosdev/ros_ws/install",
-            "type": "volume"
-        },
-        {
-            "source": "/tmp/.X11-unix",
-            "target": "/tmp/.X11-unix",
-            "type": "bind"
-        },
-        {
-            "source": "${localEnv:XAUTHORITY:-$HOME/.Xauthority}",
-            "target": "/home/rosdev/.Xauthority",
-            "type": "bind"
-        },
-        {
-            "source": "${localEnv:HOME}/.bash_history",
-            "target": "/home/rosdev/.bash_history",
-            "type": "bind"
-        },
-        {
-            "source": "${localWorkspaceFolder}/bags",
-            "target": "/home/rosdev/ros_ws/bags",
-            "type": "bind"
-        }
-    ],
+    "initializeCommand": ".devcontainer/host-setup.sh",
+    "postCreateCommand": "/home/rosdev/ros_ws/scripts/post-create.sh",
+    "remoteUser": "rosdev",
     "customizations": {
         "vscode": {
             "settings": {
@@ -76,7 +30,5 @@
                 "redhat.vscode-yaml"
             ]
         }
-    },
-    "postCreateCommand": "/home/rosdev/ros_ws/scripts/post-create.sh",
-    "remoteUser": "rosdev"
+    }
 }
