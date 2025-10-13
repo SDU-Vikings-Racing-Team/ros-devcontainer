@@ -1,72 +1,58 @@
 #!/bin/bash
 
-# This script runs on the host before the container is created
-# It prepares the environment and creates override files as needed
-
 set -e
 
-echo "Preparing host environment for devcontainer..."
+# Source paths first
+source "$(dirname "${BASH_SOURCE[0]}")/scripts/core/paths.sh"
 
-# Create required directories
-mkdir -p bags
+# Then source all other deps
+source "${PATH_CORE}/config-loader.sh"
+source "${PATH_CORE}/logger.sh" 
+source "${PATH_CORE}/path-manager.sh"
+source "${PATH_ENVIRONMENT}/environment-detector.sh"
+source "${PATH_GENERATORS}/docker-compose-generator.sh"
 
-# Detect environment and create appropriate override file
-if [ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ]; then
-    echo "CI environment detected - using base configuration only"
-    # Remove any existing override file in CI
-    rm -f .devcontainer/docker-compose.override.yml
-else
-    echo "Local environment detected - setting up additional features"
-    
-    # Check for X11 availability
-    if [ -n "$DISPLAY" ]; then
-        echo "X11 display found: $DISPLAY"
-        
-        # Allow X server connections from docker (if xhost is available)
-        if command -v xhost >/dev/null 2>&1; then
-            xhost +local:docker 2>/dev/null || echo "xhost not available or X11 not accessible"
-        fi
-        
-        # Check for XAUTHORITY
-        if [ -z "$XAUTHORITY" ]; then
-            # Use default location if XAUTHORITY not set
-            export XAUTHORITY="$HOME/.Xauthority"
-        fi
-        
-        # Create override file with X11 mounts
-        cat > .devcontainer/docker-compose.override.yml << 'EOF'
-version: '3.8'
-
-services:
-  ros2-dev:
-    volumes:
-      - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - ${XAUTHORITY:-${HOME}/.Xauthority}:/home/rosdev/.Xauthority:ro
-      - ${HOME}/.bash_history:/home/rosdev/.bash_history:rw
-EOF
-        echo "Created docker-compose.override.yml with X11 support"
-    else
-        echo "No DISPLAY found - GUI applications will not be available"
-        
-        # Create minimal override with just bash history
-        cat > .devcontainer/docker-compose.override.yml << 'EOF'
-version: '3.8'
-
-services:
-  ros2-dev:
-    volumes:
-      - ${HOME}/.bash_history:/home/rosdev/.bash_history:rw
-EOF
-        echo "Created docker-compose.override.yml without X11"
-    fi
-    
-    # Ensure bash history file exists
+prepare_host_environment() {
+    log_info "Preparing host environment for devcontainer..."
+    ensure_directory "bags"
     touch "$HOME/.bash_history" 2>/dev/null || true
-fi
+}
 
-# Make the override file part of gitignore
-if [ -f .gitignore ] && ! grep -q "docker-compose.override.yml" .gitignore; then
-    echo ".devcontainer/docker-compose.override.yml" >> .gitignore
-fi
+configure_environment() {
+    local env_info
+    env_info=$(detect_environment_context)
+    
+    local env_type="${env_info%:*}"
+    local features="${env_info#*:}"
+    
+    log_info "Environment detected: $env_type with features: ${features:-none}"
+    
+    case "$env_type" in
+        "ci")
+            log_info "CI environment - using base configuration only"
+            rm -f "$(dirname "${BASH_SOURCE[0]}")/docker-compose.override.yml"
+            ;;
+        "local")
+            create_environment_override "$(dirname "${BASH_SOURCE[0]}")/docker-compose.override.yml" "$features"
+            ;;
+        *)
+            log_warning "Unknown environment type: $env_type"
+            ;;
+    esac
+}
 
-echo "Host preparation complete"
+update_gitignore() {
+    if [ -f .gitignore ] && ! grep -q "docker-compose.override.yml" .gitignore; then
+        echo ".devcontainer/docker-compose.override.yml" >> .gitignore
+        log_info "Updated .gitignore"
+    fi
+}
+
+main() {
+    prepare_host_environment
+    configure_environment
+    update_gitignore
+    log_success "Host preparation complete"
+}
+
+main "$@"

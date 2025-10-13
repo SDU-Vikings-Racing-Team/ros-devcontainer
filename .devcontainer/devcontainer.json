@@ -19,6 +19,9 @@
                 "cmake.configureOnOpen": false
             },
             "extensions": [
+                // ToDo: 
+                //   - Replace cpptools with SonarQube (https://marketplace.visualstudio.com/items?itemName=SonarSource.sonarlint-vscode)
+                //   - Add ROS extension
                 "mhutchie.git-graph",
                 "ms-python.python",
                 "ms-python.vscode-pylance",

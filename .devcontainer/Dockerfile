@@ -1,44 +1,55 @@
 ARG ROS_DISTRO=humble
+ARG DEV_USER=rosdev
+ARG DEV_USER_ID=1000
+ARG DEV_GROUP_ID=1000
+
 FROM ghcr.io/sloretz/ros:${ROS_DISTRO}-desktop
 
-# Environment setup
-ENV DEBIAN_FRONTEND=noninteractive
+# Pass build arguments to environment
+ARG ROS_DISTRO
+ARG DEV_USER
+ARG DEV_USER_ID
+ARG DEV_GROUP_ID
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    ROS_DISTRO=${ROS_DISTRO} \
+    DEV_USER=${DEV_USER}
+
 SHELL ["/bin/bash", "-c"]
 
-# Install system packages
-RUN apt-get update && apt-get upgrade -y && apt-get install -y \
-    # Basic tools
-    wget curl git nano htop tree sudo bash-completion \
-    # ROS packages
-    ros-${ROS_DISTRO}-foxglove-bridge \
-    ros-${ROS_DISTRO}-ros-gz \
-    ros-${ROS_DISTRO}-rmw-cyclonedds-cpp \
-    ros-${ROS_DISTRO}-demo-nodes-cpp \
-    ros-${ROS_DISTRO}-demo-nodes-py \
-    # Python tools
-    python3-pip python3-pytest python3-pytest-cov \
-    && rm -rf /var/lib/apt/lists/*
+# Install system packages from external file
+COPY config/system-packages.list /tmp/system-packages.list
+RUN apt-get update && apt-get upgrade -y && \
+    xargs -a /tmp/system-packages.list apt-get install -y && \
+    # Install ROS package
+    apt-get install -y \
+        ros-${ROS_DISTRO}-foxglove-bridge \
+        ros-${ROS_DISTRO}-ros-gz \
+        ros-${ROS_DISTRO}-rmw-cyclonedds-cpp \
+        ros-${ROS_DISTRO}-demo-nodes-cpp \
+        ros-${ROS_DISTRO}-demo-nodes-py && \
+    rm -rf /var/lib/apt/lists/* /tmp/system-packages.list
 
-# Create non-root user
-RUN groupadd --gid 1000 rosdev \
-    && useradd --uid 1000 --gid 1000 -m rosdev \
-    && echo "rosdev ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/rosdev \
-    && chmod 0440 /etc/sudoers.d/rosdev
+# Create user
+RUN groupadd --gid ${DEV_GROUP_ID} ${DEV_USER} && \
+    useradd --uid ${DEV_USER_ID} --gid ${DEV_GROUP_ID} -m ${DEV_USER} && \
+    echo "${DEV_USER} ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/${DEV_USER} && \
+    chmod 0440 /etc/sudoers.d/${DEV_USER}
 
-# Create workspace structure as root, then change ownership
-RUN mkdir -p /home/rosdev/ros_ws/{src/thirdparty_packages,src/host_packages,bags,maps,results,scripts,log} \
-    && mkdir -p /home/rosdev/workspace_host \
-    && chown -R rosdev:rosdev /home/rosdev
+# Create workspace structure and set ownership
+RUN mkdir -p /home/${DEV_USER}/ros_ws/{src/thirdparty_packages,src/host_packages,bags,maps,results,scripts,log,config} && \
+    mkdir -p /home/${DEV_USER}/workspace_host && \
+    chown -R ${DEV_USER}:${DEV_USER} /home/${DEV_USER}
 
-# Switch to rosdev user
-USER rosdev
-WORKDIR /home/rosdev/ros_ws
+# Switch to user and copy files
+USER ${DEV_USER}
+WORKDIR /home/${DEV_USER}/ros_ws
 
-# Copy scripts and packages.repos
-COPY --chown=rosdev:rosdev scripts/ /home/rosdev/ros_ws/scripts/
-COPY --chown=rosdev:rosdev packages.repos /home/rosdev/ros_ws/
+# Copy configuration, scripts, and make executable
+COPY --chown=${DEV_USER}:${DEV_USER} config/ /home/${DEV_USER}/ros_ws/config/
+COPY --chown=${DEV_USER}:${DEV_USER} scripts/ /home/${DEV_USER}/ros_ws/scripts/
+COPY --chown=${DEV_USER}:${DEV_USER} packages.repos /home/${DEV_USER}/ros_ws/
 
-# Make scripts executable
-RUN chmod +x /home/rosdev/ros_ws/scripts/*.sh
+RUN find /home/${DEV_USER}/ros_ws/scripts -name "*.sh" -exec chmod +x {} \;
 
 ENV DEBIAN_FRONTEND=dialog
