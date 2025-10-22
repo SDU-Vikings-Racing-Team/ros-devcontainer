@@ -1,13 +1,13 @@
 {
-"name": "ROS2 Dev Env",
+    "name": "ROS2 Devcontainer",
     "dockerComposeFile": [
         "docker-compose.yml",
         "docker-compose.override.yml"
     ],
     "service": "ros2-dev",
     "workspaceFolder": "/home/rosdev/ros_ws",
-    "initializeCommand": ".devcontainer/host-setup.sh",
-    "postCreateCommand": "/home/rosdev/ros_ws/scripts/post-create.sh",
+    "initializeCommand": "bash .devcontainer/host-setup.sh",
+    "postCreateCommand": "bash /home/rosdev/ros_ws/scripts/post-create.sh",
     "remoteUser": "rosdev",
     "customizations": {
         "vscode": {
