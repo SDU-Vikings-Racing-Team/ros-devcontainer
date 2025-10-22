@@ -2,7 +2,7 @@ name: CI
 
 on:
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
     paths:
       - '.devcontainer/**'
       - 'Dockerfile'
@@ -20,10 +20,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Set up CI environment
+      - name: Set up CI environment and generate override
         run: |
-          chmod +x .devcontainer/host-setup.sh
+          # Set CI variables
           export CI=true
+          export GITHUB_ACTIONS=true
+          
+          # Make host-setup.sh executable
+          chmod +x .devcontainer/host-setup.sh
+          
+          # Run host-setup.sh to generate docker-compose.override.yml
+          bash .devcontainer/host-setup.sh
+          
+          # Verify the override file was created
+          if [ ! -f .devcontainer/docker-compose.override.yml ]; then
+            echo "ERROR: docker-compose.override.yml was not created"
+            exit 1
+          fi
+          
+          echo "Override file created successfully:"
+          cat .devcontainer/docker-compose.override.yml
         
       - name: Build and test devcontainer
         uses: devcontainers/ci@v0.3

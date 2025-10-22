@@ -111,8 +111,8 @@ configure_environment() {
     
     case "$env_type" in
         "ci")
-            log_info "CI mode - no override needed"
-            rm -f "$override_file"
+            log_info "CI mode - creating minimal override (no X11)"
+            generate_compose_override "$override_file" "false"
             ;;
         "local")
             local include_x11="false"
