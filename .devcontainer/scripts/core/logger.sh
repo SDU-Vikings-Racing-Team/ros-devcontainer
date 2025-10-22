@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# LOGGING UTILITIES
+
 log_with_timestamp() {
     local level="$1"
     shift
@@ -23,7 +25,7 @@ log_warning() {
 }
 
 log_debug() {
-    if [ "${DEBUG:-}" = "true" }; then
+    if [ "${DEBUG:-}" = "true" ]; then
         log_with_timestamp "DEBUG" "$@"
     fi
 }

@@ -1,30 +1,56 @@
 #!/bin/bash
 
+# LIDARSLAM ROS2 INSTALLATION
+# Usage: ./install-lidarslam.sh [--force]
+
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/utils.sh"
+source "${SCRIPT_DIR}/../core/config.sh"
+source "${SCRIPT_DIR}/../core/logger.sh"
+source "${SCRIPT_DIR}/../core/cache.sh"
 
 REPO_URL="https://github.com/rsasaki0109/lidarslam_ros2"
 REPO_NAME="lidarslam_ros2"
 TARGET_DIR="${WS_THIRDPARTY}/${REPO_NAME}"
+FORCE=false
+
+# Parse arguments
+for arg in "$@"; do
+    case $arg in
+        --force|-f)
+            FORCE=true
+            shift
+            ;;
+        *)
+            log_error "Unknown argument: $arg"
+            echo "Usage: $0 [--force]"
+            exit 1
+            ;;
+    esac
+done
 
 install_lidarslam() {
     log_info "Installing lidarslam_ros2..."
     
-    ensure_dir "${WS_THIRDPARTY}"
+    ensure_directory "${WS_THIRDPARTY}"
     
     # Check if already installed
     if [ -d "${TARGET_DIR}" ]; then
-        log_warning "lidarslam_ros2 already exists at ${TARGET_DIR}"
-        read -p "Remove existing installation and reinstall? [y/N]: " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            log_info "Removing existing installation..."
+        if [ "$FORCE" = true ]; then
+            log_info "Force flag set - removing existing installation..."
             rm -rf "${TARGET_DIR}"
         else
-            log_info "Keeping existing installation"
-            return 0
+            log_warning "lidarslam_ros2 already exists at ${TARGET_DIR}"
+            read -p "Remove existing installation and reinstall? [y/N]: " -n 1 -r
+            echo
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                log_info "Removing existing installation..."
+                rm -rf "${TARGET_DIR}"
+            else
+                log_info "Keeping existing installation"
+                return 0
+            fi
         fi
     fi
     
@@ -40,9 +66,10 @@ install_lidarslam() {
     fi
     
     log_info "Installing dependencies for lidarslam_ros2..."
-    cd "${WS_ROOT}"
+    cd "${WORKSPACE_ROOT}"
     
-    source_ros
+    # Source ROS
+    source "${ROS_ROOT}/setup.bash"
     
     update_rosdep
     

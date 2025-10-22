@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Source paths
-source "$(dirname "${BASH_SOURCE[0]}")/paths.sh"
-source "${PATH_CORE}/config-loader.sh"
-source "${PATH_CORE}/logger.sh"
+# CACHE MANAGEMENT
+# Prevents redundant apt-get update and rosdep update calls
 
-# Check if cache file is fresh
+source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/logger.sh"
+
 is_cache_fresh() {
     local cache_file="$1"
     local max_age="${2:-$CACHE_MAX_AGE}"
@@ -18,7 +18,6 @@ is_cache_fresh() {
     fi
 }
 
-# Update APT cache with caching
 update_apt_cache() {
     if is_cache_fresh "$APT_CACHE_FILE"; then
         log_info "APT cache recently updated, skipping..."
@@ -36,7 +35,6 @@ update_apt_cache() {
     fi
 }
 
-# Update rosdep with caching
 update_rosdep() {
     if is_cache_fresh "$ROSDEP_CACHE_FILE"; then
         log_info "Rosdep recently updated, skipping..."
