@@ -140,12 +140,14 @@ configure_shell_environment() {
     cat >> ~/.bashrc << 'EOF'
 
 # ROS2 Environment Setup
-if [ -f ${CONFIG_DIR}/defaults.env ]; then
+# Source config first to define all variables
+if [ -f /home/rosdev/ros_ws/config/defaults.env ]; then
     set -a
-    source ${CONFIG_DIR}/defaults.env
+    source /home/rosdev/ros_ws/config/defaults.env
     set +a
 fi
 
+# Now variables are defined, use them
 if [ -f ${ROS_ROOT}/setup.bash ]; then
     source ${ROS_ROOT}/setup.bash
 fi
