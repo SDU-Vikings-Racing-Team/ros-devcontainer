@@ -23,6 +23,25 @@ fix_permissions() {
 }
 
 # ============================================================================
+# CONFIGURE GIT SAFE DIRECTORIES
+# ============================================================================
+
+configure_git_safe_directories() {
+    log_info "Configuring Git safe directories..."
+    
+    # Trust all repositories under workspace_host
+    if [ -d "${HOST_MOUNT}" ]; then
+        git config --global --add safe.directory "${HOST_MOUNT}/*"
+        log_success "Git configured to trust workspace_host repositories"
+    fi
+    
+    # Also trust the workspace root
+    if [ -d "${WORKSPACE_ROOT}/.git" ]; then
+        git config --global --add safe.directory "${WORKSPACE_ROOT}"
+    fi
+}
+
+# ============================================================================
 # SETUP SEQUENCE
 # ============================================================================
 
@@ -88,6 +107,7 @@ display_summary() {
 
 main() {
     fix_permissions
+    configure_git_safe_directories
     execute_setup_sequence
     display_summary
     log_success "Development environment ready!"
