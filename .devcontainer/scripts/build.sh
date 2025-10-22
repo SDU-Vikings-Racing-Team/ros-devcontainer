@@ -5,13 +5,9 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/core/config-loader.sh"
+source "${SCRIPT_DIR}/core/config.sh"
 source "${SCRIPT_DIR}/core/logger.sh"
-source "${SCRIPT_DIR}/core/path-manager.sh"
-source "${SCRIPT_DIR}/environment/ros-environment.sh"
-source "${SCRIPT_DIR}/commands/command-factory.sh"
 
-# Build workspace
 build_workspace() {
     local additional_args="$*"
     
@@ -22,14 +18,28 @@ build_workspace() {
     
     log_info "Building workspace..."
     
-    setup_ros_environment
+    # Source ROS environment
+    local ros_setup="${ROS_ROOT}/setup.bash"
+    if [ -f "$ros_setup" ]; then
+        source "$ros_setup"
+    else
+        log_error "ROS setup not found"
+        return 1
+    fi
     
-    local build_cmd
-    build_cmd=$(build_colcon_command "$additional_args")
+    # Source workspace if it exists
+    local ws_setup="${WORKSPACE_ROOT}/install/setup.bash"
+    if [ -f "$ws_setup" ]; then
+        source "$ws_setup"
+    fi
     
-    if execute_command "workspace build" "$build_cmd"; then
+    cd "${WORKSPACE_ROOT}"
+    
+    if colcon build ${COLCON_BUILD_ARGS} ${additional_args}; then
+        log_success "Workspace build completed"
         return 0
     else
+        log_error "Workspace build failed"
         return 1
     fi
 }

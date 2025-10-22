@@ -1,20 +1,20 @@
 #!/bin/bash
 
-# Entry point after container creation  
+# POST-CREATE ENTRY POINT
+# Runs after container creation to set up workspace
 
 set -e
 
-# Source paths first
-source "$(dirname "${BASH_SOURCE[0]}")/core/paths.sh"
-
-# Source utils using paths
-source "${PATH_CORE}/config-loader.sh"
-source "${PATH_CORE}/logger.sh"
-source "${PATH_CORE}/path-manager.sh"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/core/config.sh"
+source "${SCRIPT_DIR}/core/logger.sh"
 
 log_info "Starting post-create setup..."
 
-# Fix permissions for mounted volumes
+# ============================================================================
+# FIX PERMISSIONS
+# ============================================================================
+
 fix_permissions() {
     log_info "Fixing permissions..."
     sudo chown -R "${DEV_USER}:${DEV_USER}" "${HOME_DIR}/.ros" 2>/dev/null || true
@@ -22,19 +22,24 @@ fix_permissions() {
     sudo chown -R "${DEV_USER}:${DEV_USER}" "${WORKSPACE_ROOT}/install" 2>/dev/null || true
 }
 
-# Execute setup scripts in dependency order
+# ============================================================================
+# SETUP SEQUENCE
+# ============================================================================
+
 execute_setup_sequence() {
-    "${PATH_SETUP}/workspace-setup.sh"
-    "${PATH_ENVIRONMENT}/environment-setup.sh"
+    "${SCRIPT_DIR}/setup.sh"
     
     # Only proceed with deps and build if there are packages
     if has_content "$WORKSPACE_SRC"; then
-        "${PATH_SCRIPTS}/install-deps.sh"
-        "${PATH_SCRIPTS}/build.sh"
+        "${SCRIPT_DIR}/install-deps.sh"
+        "${SCRIPT_DIR}/build.sh"
     fi
 }
 
-# Display setup summary
+# ============================================================================
+# SUMMARY
+# ============================================================================
+
 display_summary() {
     echo ""
     echo "============================="
@@ -76,6 +81,10 @@ display_summary() {
         echo "No packages built yet. Add packages to src/ and run 'cb'"
     fi
 }
+
+# ============================================================================
+# MAIN
+# ============================================================================
 
 main() {
     fix_permissions
