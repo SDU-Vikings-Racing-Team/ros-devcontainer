@@ -13,25 +13,77 @@
         "vscode": {
             "settings": {
                 "terminal.integrated.defaultProfile.linux": "bash",
+                
+                // Python config
                 "python.defaultInterpreterPath": "/usr/bin/python3",
+                "python.analysis.typeCheckingMode": "basic",
+                "python.analysis.autoImportCompletions": true,
+                "python.formatting.provider": "black",
+                "python.linting.enabled": true,
+                "python.linting.ruffEnabled": true,
+                "[python]": {
+                    "editor.formatOnSave": true,
+                    "editor.codeActionsOnSave": {
+                        "source.organizeImports": "explicit"
+                    }
+                },
+                
+                // C++ config (clangd)
+                "clangd.path": "/usr/bin/clangd-14",
+                "clangd.checkUpdates": false,
+                "clangd.arguments": [
+                    "--compile-commands-dir=${workspaceFolder}/build",
+                    "--background-index",
+                    "--clang-tidy",
+                    "--completion-style=detailed",
+                    "--header-insertion=never",
+                    "--pch-storage=memory"
+                ],
+                
+                // Disable cpptools IntelliSense (clangd handles it)
+                "C_Cpp.intelliSenseEngine": "disabled",
+                "C_Cpp.autocomplete": "disabled",
+                "C_Cpp.errorSquiggles": "disabled",
+                
+                // CMake
+                "cmake.configureOnOpen": false,
+                "cmake.buildDirectory": "${workspaceFolder}/build",
+                
+                // File watchers
                 "files.watcherExclude": {
                     "**/build/**": true,
                     "**/install/**": true,
                     "**/log/**": true
                 },
-                "cmake.configureOnOpen": false
+                
+                // Specific to ROS
+                "files.associations": {
+                    "*.launch": "xml",
+                    "*.xacro": "xml",
+                    "*.urdf": "xml",
+                    "*.rviz": "yaml"
+                }
             },
             "extensions": [
-                // ToDo: 
-                //   - Replace cpptools with SonarQube (https://marketplace.visualstudio.com/items?itemName=SonarSource.sonarlint-vscode)
-                //   - Add ROS extension
+                // Git
                 "mhutchie.git-graph",
+                
+                // Python
                 "ms-python.python",
                 "ms-python.vscode-pylance",
-                "ms-python.black-formatter",
-                "ms-vscode.cpptools",
+                "charliermarsh.ruff",
+                
+                // C++ (clangd)
+                "llvm-vs-code-extensions.vscode-clangd",
+                
+                // CMake
                 "ms-vscode.cmake-tools",
                 "twxs.cmake",
+                
+                // ROS
+                "ms-iot.vscode-ros",
+                
+                // Markup
                 "redhat.vscode-xml",
                 "redhat.vscode-yaml"
             ]

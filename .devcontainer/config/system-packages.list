@@ -9,3 +9,4 @@ bash-completion
 python3-pip
 python3-pytest
 python3-pytest-cov
+clangd-14
