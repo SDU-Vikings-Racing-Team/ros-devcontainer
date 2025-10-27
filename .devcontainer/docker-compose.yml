@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
       args:
         ROS_DISTRO: humble
-    network_mode: host
+    network_mode: host  # Foxglove WebSocket on port 8765 is accessible via host network
     environment:
       ROS_DOMAIN_ID: 7
       ROS_DISTRO: humble
