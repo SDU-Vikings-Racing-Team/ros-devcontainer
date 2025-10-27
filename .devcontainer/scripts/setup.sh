@@ -167,6 +167,10 @@ alias source_ws='source ${WORKSPACE_ROOT}/install/setup.bash'
 alias clean_ws='cd ${WORKSPACE_ROOT} && rm -rf build install log'
 alias rosdep_install='cd ${WORKSPACE_ROOT} && rosdep install --from-paths src --ignore-src -r -y'
 
+# Foxglove
+alias foxglove='bash ${SCRIPTS_DIR}/start-foxglove.sh'
+alias foxglove_bridge='foxglove'
+
 # Shell Aliases
 alias ll='ls -alF --color=auto'
 alias la='ls -A --color=auto'
