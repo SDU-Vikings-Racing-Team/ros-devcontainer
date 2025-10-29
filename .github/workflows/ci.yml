@@ -11,82 +11,63 @@ on:
   
   workflow_dispatch:
 
+env:
+  CI: true
+  GITHUB_ACTIONS: true
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/ros2-humble-devcontainer
+
 jobs:
-  test-devcontainer:
+  build:
     runs-on: ubuntu-latest
-    name: Test Devcontainer Build
+    name: Build Devcontainer
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Set up CI environment and generate override
-        run: |
-          # Set CI variables
-          export CI=true
-          export GITHUB_ACTIONS=true
-          
-          # Make host-setup.sh executable
-          chmod +x .devcontainer/host-setup.sh
-          
-          # Run host-setup.sh to generate docker-compose.override.yml
-          bash .devcontainer/host-setup.sh
-          
-          # Verify the override file was created
-          if [ ! -f .devcontainer/docker-compose.override.yml ]; then
-            echo "ERROR: docker-compose.override.yml was not created"
-            exit 1
-          fi
-          
-          echo "Override file created successfully:"
-          cat .devcontainer/docker-compose.override.yml
-        
-      - name: Build and test devcontainer
+      - name: Set up environment and generate override
+        run: bash ci/setup-environment.sh
+      
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+      
+      - name: Build and push devcontainer
         uses: devcontainers/ci@v0.3
         with:
-          imageName: ros2-devcontainer
+          imageName: ${{ env.IMAGE_NAME }}
+          push: always
           env: |
             CI=true
             GITHUB_ACTIONS=true
-          
-          runCmd: |
-            echo "========================================="
-            echo "Testing ROS2 Devcontainer"
-            echo "========================================="
-            
-            # Check ROS installation
-            echo -e "\n[1/5] Checking ROS installation..."
-            source /opt/ros/${ROS_DISTRO}/setup.bash
-            ros2 --version
-            
-            # Check workspace structure
-            echo -e "\n[2/5] Checking workspace structure..."
-            ls -la /home/rosdev/ros_ws/
-            
-            # Check scripts exist
-            echo -e "\n[3/5] Checking scripts..."
-            ls -la /home/rosdev/ros_ws/scripts/
-            ls -la /home/rosdev/ros_ws/scripts/core/
-            
-            # Test environment configuration
-            echo -e "\n[4/5] Testing environment..."
-            source /home/rosdev/ros_ws/scripts/core/config.sh
-            echo "ROS_DISTRO: $ROS_DISTRO"
-            echo "WORKSPACE_ROOT: $WORKSPACE_ROOT"
-            echo "ROS_DOMAIN_ID: $ROS_DOMAIN_ID"
-            
-            # Verify no X11 in CI
-            echo -e "\n[5/5] Verifying CI configuration..."
-            if [ -f /home/rosdev/.Xauthority ]; then
-              echo "ERROR: .Xauthority should not exist in CI"
-              exit 1
-            fi
-            
-            if [ -d /tmp/.X11-unix ]; then
-              echo "ERROR: X11 socket should not exist in CI"
-              exit 1
-            fi
-            
-            echo -e "\n========================================="
-            echo "All tests passed!"
-            echo "========================================="
+
+  test:
+    runs-on: ubuntu-latest
+    name: Test Devcontainer
+    needs: [build]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up environment
+        run: bash ci/setup-environment.sh
+      
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+      
+      - name: Run tests
+        uses: devcontainers/ci@v0.3
+        with:
+          imageName: ${{ env.IMAGE_NAME }}
+          push: never
+          env: |
+            CI=true
+            GITHUB_ACTIONS=true
+          runCmd: bash /home/rosdev/workspace_host/ci/run-tests.sh
