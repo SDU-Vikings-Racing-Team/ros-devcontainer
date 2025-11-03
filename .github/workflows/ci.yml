@@ -12,8 +12,6 @@ on:
   workflow_dispatch:
 
 env:
-  CI: true
-  GITHUB_ACTIONS: true
   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
   IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/ros2-humble-devcontainer
 
@@ -40,9 +38,6 @@ jobs:
         with:
           imageName: ${{ env.IMAGE_NAME }}
           push: always
-          env: |
-            CI=true
-            GITHUB_ACTIONS=true
 
   test:
     runs-on: ubuntu-latest
@@ -67,7 +62,4 @@ jobs:
         with:
           imageName: ${{ env.IMAGE_NAME }}
           push: never
-          env: |
-            CI=true
-            GITHUB_ACTIONS=true
           runCmd: bash /home/rosdev/workspace_host/ci/run-tests.sh

@@ -15,7 +15,7 @@ source "${SCRIPT_DIR}/scripts/core/logger.sh"
 # ============================================================================
 
 is_ci_environment() {
-    [ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ]
+    [ -n "$CI" ]
 }
 
 has_x11_support() {

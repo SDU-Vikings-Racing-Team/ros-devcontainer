@@ -9,9 +9,6 @@ echo "========================================="
 echo "Setting up CI environment"
 echo "========================================="
 
-export CI=true
-export GITHUB_ACTIONS=true
-
 chmod +x .devcontainer/host-setup.sh
 
 # Run host-setup.sh to generate docker-compose.override.yml
